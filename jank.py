@@ -1,7 +1,6 @@
 import sys, subprocess
 import pop_check
 
-
 close_letters = {
     'q': {'w', 'a'},
     'a': {'z', 's', 'q'},
