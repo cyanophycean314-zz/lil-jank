@@ -1,6 +1,7 @@
 import sys, subprocess
 import pop_check
 
+dryrun_flag = True
 
 close_letters = {
     'q': {'w', 'a'},
@@ -81,10 +82,15 @@ def find_similar_packages(s):
     else:
         return[s]
 
+def run_install(package_name, dryrun=False):
+    command = "npm install " + package_name
+    if dryrun:
+        print(command)
+    else:
+        process = subprcess.Popen(command.split())
+
 if __name__ == "__main__":
     pack_name = sys.argv[1]
-    packs = typo_generator(pack_name)
-    print packs
     possible_packs = typo_generator(pack_name)
     unfiltered_packs = pop_check.popularity_sort(possible_packs)
     packs = unfiltered_packs
@@ -100,16 +106,16 @@ if __name__ == "__main__":
                              + packs[0][0]
                              + " instead? [y/n] ")
         if pack_yes[0] == "y":
-            print("npm install " + packs[0][0])
+            run_install(packs[0][0], dryrun=dryrun_flag)
         if pack_yes[0] == "n":
-            print("npm install " + pack_name)
+            run_install(pack_name, dryrun=dryrun_flag)
     elif len(packs) > 1:
         choices = ""
         for index, (pack, popularity) in enumerate(packs):
             choices += str(index + 1) + ": " + pack + "\n"
         pack_number = raw_input("There are multiple popular packages with similar names.\nWhich package number do you really want?\n"
                                 + choices)
-        print("npm install " + packs[int(pack_number) - 1][0])
+        run_install(packs[int(pack_number) - 1][0], dryrun=dryrun_flag)
     else:
-        print("npm install " + pack_name)
+        run_install(pack_name, dryrun=dryrun_flag)
 
