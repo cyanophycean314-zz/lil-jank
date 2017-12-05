@@ -1,11 +1,13 @@
+from multiprocessing import Pool
 import requests
+import time
 
 downloads_url = 'https://api.npmjs.org/downloads/point/last-month/{}'
 dependents_url = 'https://www.npmjs.com/package/{}'
 dependents_tag = 'Dependents ('
 downloads_scale = 20e5 # Max downloads is express with 17M per month
 dependents_scale = 60e2 # Max dependents is lodash with 57K per month
-popularity_min_threshold = 1 # Min popularity for package to be considered
+popularity_min_threshold = 1e-3 # Min popularity for package to be considered
 
 # Monthly downloads
 def check_downloads(proj_name):
@@ -36,11 +38,20 @@ def get_popularity(proj_name):
     # print('{}: {}, {}'.format(proj_name, downloads, dependents))
     return (downloads / downloads_scale) + (dependents / dependents_scale)
 
-def popularity_sort(list_names):
+def popularity_sort(set_names):
+    list_names = list(set_names)
     # Query each possible names' popularity
+    start_time = time.time()
+    p = Pool(len(list_names))
+    downs = p.map(check_downloads, list_names)
+    deps = p.map(check_dependents, list_names)
+    end_time = time.time()
+    print('Network time: {}'.format(end_time - start_time))
+
     popularity = {}
-    for proj in list_names:
-        popularity[proj] = get_popularity(proj)
+    for i in range(len(list_names)):
+        popularity[list_names[i]] = -1 if downs[i] == -1 else downs[i] / downloads_scale + deps[i] / dependents_scale
+        
     # Sort based on popularity, return only packages which exist
     sorted_names = sorted(list_names, key = lambda x: popularity[x], reverse=True)
     while sorted_names and popularity[sorted_names[-1]] < popularity_min_threshold:
@@ -49,4 +60,4 @@ def popularity_sort(list_names):
     return sorted_names_popularities
 
 if __name__ == "__main__":
-    print(popularity_sort(['react','recat']))
+    print(popularity_sort(['react','recat', 'rect']))
