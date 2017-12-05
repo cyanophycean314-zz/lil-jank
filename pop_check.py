@@ -1,11 +1,11 @@
-
 import requests
 
 downloads_url = 'https://api.npmjs.org/downloads/point/last-month/{}'
 dependents_url = 'https://www.npmjs.com/package/{}'
 dependents_tag = 'Dependents ('
-downloads_scale = 20e5 #Max downloads is express with 17M per month
-dependents_scale = 60e2 #Max dependents is lodash with 57K per month
+downloads_scale = 20e5 # Max downloads is express with 17M per month
+dependents_scale = 60e2 # Max dependents is lodash with 57K per month
+popularity_min_threshold = 1 # Min popularity for package to be considered
 
 # Monthly downloads
 def check_downloads(proj_name):
@@ -18,7 +18,7 @@ def check_dependents(proj_name):
     r = requests.get(dependents_url.format(proj_name))
     if r.status_code != requests.codes.ok:
         return -1
-    #Scrape the number of dependent projects out
+    # Scrape the number of dependent projects out
     num_index = r.text.find(dependents_tag)
     if num_index == -1:
         return 0
@@ -37,16 +37,16 @@ def get_popularity(proj_name):
     return (downloads / downloads_scale) + (dependents / dependents_scale)
 
 def popularity_sort(list_names):
-    #Query each possible names' popularity
+    # Query each possible names' popularity
     popularity = {}
     for proj in list_names:
         popularity[proj] = get_popularity(proj)
-    # print(popularity)
     # Sort based on popularity, return only packages which exist
     sorted_names = sorted(list_names, key = lambda x: popularity[x], reverse=True)
-    while popularity[sorted_names[-1]] == -1:
+    while sorted_names and popularity[sorted_names[-1]] < popularity_min_threshold:
         sorted_names.pop()
-    return sorted_names
+    sorted_names_popularities = [(pack, popularity[pack]) for pack in sorted_names]
+    return sorted_names_popularities
 
 if __name__ == "__main__":
     print(popularity_sort(['react','recat']))

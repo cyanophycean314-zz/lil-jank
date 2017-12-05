@@ -1,4 +1,6 @@
-import sys
+import sys, subprocess
+import pop_check
+
 
 close_letters = {
     'q': {'w', 'a'},
@@ -83,15 +85,31 @@ if __name__ == "__main__":
     pack_name = sys.argv[1]
     packs = typo_generator(pack_name)
     print packs
-    """
-    if len(packs) > 1:
+    possible_packs = typo_generator(pack_name)
+    unfiltered_packs = pop_check.popularity_sort(possible_packs)
+    packs = unfiltered_packs
+    # packs = filter(unfiltered_packs,
+    #                lambda p: p[1] > popularity_min_threshold)
+
+    if len(packs) == 1 and packs[0][0] != pack_name:
+        pack_yes = raw_input("Package "
+                             + packs[0][0]
+                             + " is much more popular than package "
+                             + pack_name
+                             + "\nDo you want to install "
+                             + packs[0][0]
+                             + " instead? [y/n] ")
+        if pack_yes[0] == "y":
+            print("npm install " + packs[0][0])
+        if pack_yes[0] == "n":
+            print("npm install " + pack_name)
+    elif len(packs) > 1:
         choices = ""
-        for index, pack in enumerate(packs):
+        for index, (pack, popularity) in enumerate(packs):
             choices += str(index + 1) + ": " + pack + "\n"
-        pack_number = raw_input("Which package number do you really want?\n"
+        pack_number = raw_input("There are multiple popular packages with similar names.\nWhich package number do you really want?\n"
                                 + choices)
-        print("npm install " + packs[int(pack_number) - 1])
+        print("npm install " + packs[int(pack_number) - 1][0])
     else:
         print("npm install " + pack_name)
-        """
 
