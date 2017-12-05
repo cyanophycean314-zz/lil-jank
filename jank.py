@@ -1,7 +1,7 @@
 import sys, subprocess
 import pop_check
 
-dryrun_flag = True
+dryrun_flag = False
 
 close_letters = {
     'q': {'w', 'a'},
@@ -83,11 +83,11 @@ def find_similar_packages(s):
         return[s]
 
 def run_install(package_name, dryrun=False):
-    command = "npm install " + package_name
+    command = "echo npm install " + package_name
     if dryrun:
         print(command)
     else:
-        process = subprcess.Popen(command.split())
+        process = subprocess.Popen(command.split())
 
 if __name__ == "__main__":
     pack_name = sys.argv[1]
