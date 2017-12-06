@@ -41,12 +41,10 @@ def get_popularity(proj_name):
 def popularity_sort(set_names):
     list_names = list(set_names)
     # Query each possible names' popularity
-    start_time = time.time()
     p = Pool(len(list_names))
     downs = p.map(check_downloads, list_names)
     deps = p.map(check_dependents, list_names)
-    end_time = time.time()
-    print('Network time: {}'.format(end_time - start_time))
+    p.close()
 
     popularity = {}
     for i in range(len(list_names)):

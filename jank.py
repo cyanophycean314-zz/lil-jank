@@ -1,7 +1,8 @@
-import sys, subprocess
+import datetime, requests, sys, subprocess
 import pop_check
+from dateutil import parser
 
-dryrun_flag = True
+dryrun_flag = False
 
 close_letters = {
     'q': {'w', 'a'},
@@ -31,6 +32,33 @@ close_letters = {
     'l': {'k', 'o'},
     'p': {'o'}
 }
+
+node_core_modules = ["http","events","util","domain","cluster", \
+"buffer","stream","crypto","tls","fs","string_decoder","path","net",\
+"dgram","dns","https","url","punycode","readline","repl","vm",\
+"child_process","assert","zlib","tty","os","querystring"]
+
+repository_url = 'https://registry.npmjs.org/{}'
+
+def check_warnings(proj_name):
+    has_warning = False
+    # check if name of core module
+    if proj_name in node_core_modules:
+        has_warning = True
+        print('This module is a core node module. You probably do not need to install this.')
+
+    # check if package less than one day old
+    r = requests.get(repository_url.format(proj_name))
+    if r.status_code == requests.codes.ok and 'error' not in r.json():
+        creation_date = parser.parse(r.json()['time']['created'])
+        diff =  datetime.datetime.now(datetime.timezone.utc) - creation_date
+        if diff.days < 1:
+            has_warning = True
+            print('This module is less than a day old and has not been vetted yet. Installing this package is not advised')
+
+    if has_warning:
+        return input('Please retype the package name you wish to install: ').strip() != proj_name
+    return False
 
 def insert_char(s, c, i):
     assert len(s) > 0 and len(c) == 1 and i in range(0, len(s) + 1)
@@ -83,13 +111,17 @@ def find_similar_packages(s):
         return[s]
 
 def run_install(package_name, dryrun=False):
-    command = "npm install " + package_name
+    command = "echo npm install " + package_name
     if dryrun:
         print(command)
     else:
-        process = subprcess.Popen(command.split())
+        process = subprocess.Popen(command.split())
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print('Usage: python jank.py <package>')
+        sys.exit(1)
+        
     pack_name = sys.argv[1]
     possible_packs = typo_generator(pack_name)
     unfiltered_packs = pop_check.popularity_sort(possible_packs)
@@ -97,8 +129,9 @@ if __name__ == "__main__":
     # packs = filter(unfiltered_packs,
     #                lambda p: p[1] > popularity_min_threshold)
 
+    chosen_name = sys.argv[1]
     if len(packs) == 1 and packs[0][0] != pack_name:
-        pack_yes = raw_input("Package "
+        pack_yes = input("Package "
                              + packs[0][0]
                              + " is much more popular than package "
                              + pack_name
@@ -106,16 +139,18 @@ if __name__ == "__main__":
                              + packs[0][0]
                              + " instead? [y/n] ")
         if pack_yes[0] == "y":
-            run_install(packs[0][0], dryrun=dryrun_flag)
+            chosen_name = packs[0][0]
         if pack_yes[0] == "n":
-            run_install(pack_name, dryrun=dryrun_flag)
+            chosen_name = pack_name
     elif len(packs) > 1:
         choices = ""
         for index, (pack, popularity) in enumerate(packs):
             choices += str(index + 1) + ": " + pack + "\n"
-        pack_number = raw_input("There are multiple popular packages with similar names.\nWhich package number do you really want?\n"
+        pack_number = input("There are multiple popular packages with similar names.\nWhich package number do you really want?\n"
                                 + choices)
-        run_install(packs[int(pack_number) - 1][0], dryrun=dryrun_flag)
+        chosen_name = packs[int(pack_number) - 1][0]
     else:
-        run_install(pack_name, dryrun=dryrun_flag)
+        chosen_name = pack_name
+    if not check_warnings(chosen_name):
+        run_install(chosen_name, dryrun=dryrun_flag)
 
