@@ -137,7 +137,8 @@ def check_scripts(package_name, dryrun=False):
     urllib.request.urlretrieve(url, filename)
     extract(filename)
     pkg_json = json.load(open('package/package.json'))
-    pprint(pkg_json["scripts"])
+    if pkg_json.get("scripts") != None:
+        pprint(pkg_json.get("scripts"))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
