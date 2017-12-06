@@ -1,6 +1,9 @@
-import datetime, requests, sys, subprocess
+import datetime, requests, os, sys, subprocess, tarfile
 import pop_check
 from dateutil import parser
+import urllib.request 
+import json
+from pprint import pprint
 
 dryrun_flag = False
 
@@ -99,11 +102,6 @@ def typo_generator(s):
             results.add(replace_char(s, None, i, j))
     return results
 
-def test_typos():
-    pack_names = ['react-dom']
-    for name in pack_names:
-        print(typo_generator(name))
-
 def find_similar_packages(s):
     if s == "leftpda":
         return[s, "leftpad"]
@@ -117,9 +115,30 @@ def run_install(package_name, dryrun=False):
     else:
         process = subprocess.Popen(command.split())
 
+def extract(tar_url, extract_path='.'):
+    tar = tarfile.open(tar_url, 'r')
+    for item in tar:
+        tar.extract(item, extract_path)
+        if item.name.find(".tgz") != -1 or item.name.find(".tar") != -1:
+            extract(item.name, "./" + item.name[:item.name.rfind('/')])
+
+def check_scripts(package_name, dryrun=False):
+    command = "npm view " + package_name + " dist.tarball"
+    #if dryrun:
+        #print(command)
+    #else:
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+    url = output[:len(output)-1].decode("utf-8")
+    filename = package_name + ".tgz"
+    urllib.request.urlretrieve(url, filename)
+    extract(filename)
+    pkg_json = json.load(open('package/package.json'))
+    pprint(pkg_json["scripts"])
+
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print('Usage: python jank.py <package>')
+        print('Usage: python3 jank.py <package>')
         sys.exit(1)
         
     pack_name = sys.argv[1]
@@ -152,5 +171,6 @@ if __name__ == "__main__":
     else:
         chosen_name = pack_name
     if not check_warnings(chosen_name):
-        run_install(chosen_name, dryrun=dryrun_flag)
+        check_scripts(chosen_name, dryrun=dryrun_flag)
+        #run_install(chosen_name, dryrun=dryrun_flag)
 
