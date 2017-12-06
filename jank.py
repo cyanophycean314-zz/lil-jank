@@ -1,11 +1,11 @@
-import datetime, requests, os, sys, subprocess, tarfile
+import datetime, requests, os, sys, subprocess, tarfile, json, time
 import pop_check
 from dateutil import parser
 import urllib.request 
-import json
 from pprint import pprint
 
 dryrun_flag = False
+time_flag = False
 
 close_letters = {
     'q': {'w', 'a'},
@@ -40,6 +40,9 @@ node_core_modules = ["http","events","util","domain","cluster", \
 "buffer","stream","crypto","tls","fs","string_decoder","path","net",\
 "dgram","dns","https","url","punycode","readline","repl","vm",\
 "child_process","assert","zlib","tty","os","querystring"]
+
+unsafe_keywords = ["http", "request", "process.env", "rm", \
+"password", "username", "host", "network"]
 
 repository_url = 'https://registry.npmjs.org/{}'
 
@@ -125,11 +128,23 @@ def extract(tar_url, extract_path='.'):
         if item.name.find(".tgz") != -1 or item.name.find(".tar") != -1:
             extract(item.name, "./" + item.name[:item.name.rfind('/')])
 
-def check_scripts(package_name, dryrun=False):
+def check_script(script):
+    strings = script.split(" ")
+    if strings[0] == "node":
+        file = open("package/" + strings[1], "r")
+        for line in file:
+            for keyword in unsafe_keywords:
+                if keyword in line:
+                    return True
+    else:
+        for string in strings:
+            for keyword in unsafe_keywords:
+                if keyword in string:
+                    return True
+    return False
+
+def check_scripts(package_name):
     command = "npm view " + package_name + " dist.tarball"
-    #if dryrun:
-        #print(command)
-    #else:
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     url = output[:len(output)-1].decode("utf-8")
@@ -138,7 +153,9 @@ def check_scripts(package_name, dryrun=False):
     extract(filename)
     pkg_json = json.load(open('package/package.json'))
     if pkg_json.get("scripts") != None:
-        pprint(pkg_json.get("scripts"))
+        #pprint(pkg_json.get("scripts"))
+        check_script(pkg_json.get("scripts").get("preinstall"))
+        check_script(pkg_json.get("scripts").get("postinstall"))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -146,10 +163,19 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print('Verifying package security')
+
+    if time_flag:
+        start = time.time()
+    check_scripts('janksum')
+
     pack_name = sys.argv[1]
     possible_packs = typo_generator(pack_name)
     unfiltered_packs = pop_check.popularity_sort(possible_packs)
     packs = unfiltered_packs
+
+    if time_flag:
+        end = time.time()
+        print("Typo generation and popularity check took " + str(end - start) + " seconds")
 
     chosen_name = pack_name
     # 1 more popular package
@@ -178,8 +204,23 @@ if __name__ == "__main__":
             
         chosen_name = packs[int(pack_number) - 1][0]
 
-    # Perform final checks on core modules and youthfulness
+    # Perform final checks on core modules, scripts, and youthfulness
     if not check_warnings(chosen_name):
-        check_scripts(chosen_name, dryrun=dryrun_flag)
-        #run_install(chosen_name, dryrun=dryrun_flag)
+        if time_flag:
+            start2 = time.time()
+        if not check_scripts(chosen_name):
+            install_yes = input("Warning: dangerous behavior has been detected in the preinstall or postinstall scripts.\n"
+                    + "Are you sure you want to install? [y/n]\n")
+            if install_yes[0] == "y":
+                run_install(chosen_name, dryrun=dryrun_flag)
+                exit()
+            elif install_yes[0] == "n":
+                exit()
+            else:
+                while install_yes[0] not in 'yn':
+                    install_yes = input("Please enter [y/n] ")
+        if time_flag:
+            end2 = time.time()
+            print("Script check took " + str(end2 - start2) + " seconds")
+        run_install(chosen_name, dryrun=dryrun_flag)
 
