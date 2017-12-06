@@ -68,9 +68,7 @@ def replace_char(s, c, i, j):
     assert len(s) > 0 and i in range(0, len(s)) and j in range(0, len(s))
     l = list(s)
     if c == None:
-        tmp = l[i]
-        l[i] = l[j]
-        l[j] = tmp
+        l[i], l[j] = l[j], l[i]
     else:
         l[i] = c
     return ''.join(l)
@@ -104,12 +102,6 @@ def test_typos():
     for name in pack_names:
         print(typo_generator(name))
 
-def find_similar_packages(s):
-    if s == "leftpda":
-        return[s, "leftpad"]
-    else:
-        return[s]
-
 def run_install(package_name, dryrun=False):
     command = "echo npm install " + package_name
     if dryrun:
@@ -119,38 +111,43 @@ def run_install(package_name, dryrun=False):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print('Usage: python jank.py <package>')
+        print('Usage: python3 jank.py <package>')
         sys.exit(1)
-        
+
+    print('Verifying package security')
     pack_name = sys.argv[1]
     possible_packs = typo_generator(pack_name)
     unfiltered_packs = pop_check.popularity_sort(possible_packs)
     packs = unfiltered_packs
-    # packs = filter(unfiltered_packs,
-    #                lambda p: p[1] > popularity_min_threshold)
 
-    chosen_name = sys.argv[1]
+    chosen_name = pack_name
+    # 1 more popular package
     if len(packs) == 1 and packs[0][0] != pack_name:
-        pack_yes = input("Package "
-                             + packs[0][0]
-                             + " is much more popular than package "
-                             + pack_name
-                             + "\nDo you want to install "
-                             + packs[0][0]
-                             + " instead? [y/n] ")
+        pack_yes = input(("Package {} is much more popular than package {}\n"
+                          + "Do you want to install {} instead? [y/n]? ")
+                         .format(packs[0][0], pack_name, packs[0][0]))
         if pack_yes[0] == "y":
             chosen_name = packs[0][0]
-        if pack_yes[0] == "n":
+        elif pack_yes[0] == "n":
             chosen_name = pack_name
+        else:
+            while pack_yes[0] not in 'yn':
+                pack_yes = input("Please enter [y/n] ")
+    # More than 1 popular package
     elif len(packs) > 1:
         choices = ""
-        for index, (pack, popularity) in enumerate(packs):
-            choices += str(index + 1) + ": " + pack + "\n"
-        pack_number = input("There are multiple popular packages with similar names.\nWhich package number do you really want?\n"
+        packs.append((pack_name, 0))
+        for index, (pack, _popularity) in enumerate(packs):
+            choices += str(index + 1) + ": " + pack + (' (unpopular)' if pack == pack_name else '') + "\n"
+        pack_number = ''
+        while not pack_number.isdigit() or int(pack_number) <= 0 or int(pack_number) > len(packs):
+            pack_number = input("There are multiple popular packages with similar names.\n"
+                                + "Which package number do you really want?\n"
                                 + choices)
+            
         chosen_name = packs[int(pack_number) - 1][0]
-    else:
-        chosen_name = pack_name
+
+    # Perform final checks on core modules and youthfulness
     if not check_warnings(chosen_name):
         run_install(chosen_name, dryrun=dryrun_flag)
 
