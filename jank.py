@@ -100,18 +100,16 @@ def typo_generator(s):
             results.add(replace_char(s, None, i, j))
     return results
 
-<<<<<<< HEAD
 def find_similar_packages(s):
     if s == "leftpda":
         return[s, "leftpad"]
     else:
         return[s]
-=======
+
 def test_typos():
     pack_names = ['react-dom']
     for name in pack_names:
         print(typo_generator(name))
->>>>>>> 1d6688a780f6c7a96e4e4da7c29b374c8683c7e6
 
 def run_install(package_name, dryrun=False):
     command = "echo npm install " + package_name
