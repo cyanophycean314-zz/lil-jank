@@ -44,7 +44,7 @@ def popularity_sort(set_names):
         
     # Sort based on popularity, return only packages which exist
     sorted_names = sorted(list_names, key = lambda x: popularity[x], reverse=True)
-    popularity_min_threshold = popularity[sorted_names[0]] / 1e4
+    popularity_min_threshold = 0 if len(sorted_names) == 0 else popularity[sorted_names[0]] / 1e4
     sorted_names_popularities = [(pack, popularity[pack] < popularity_min_threshold) for pack in sorted_names]
     return sorted_names_popularities
 

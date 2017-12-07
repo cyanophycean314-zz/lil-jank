@@ -29,7 +29,13 @@ def check_warnings(proj_name):
             print('This module is less than a day old and has not been vetted yet. Installing this package is not advised')
 
     if has_warning:
-        return input('Please retype the package name you wish to install: ').strip() != proj_name
+        pack_yes = ''
+        while len(pack_yes) == 0 or pack_yes[0] not in 'yn':
+            pack_yes = input("Please enter [y/n] ")
+        if pack_yes[0] == "y":
+            chosen_name = packs[0][0]
+        else:
+            chosen_name = pack_name
     return False
 
 def run_install(package_name, dryrun=False):
@@ -79,14 +85,12 @@ if __name__ == "__main__":
         prompt = '' if len(packs) == 1 else "Package {} is more popular than {}.\n".format(packs[0][0], pack_name)
         pack_yes = input(prompt + "Do you want to install {} instead? [y/n]? ".format(packs[0][0]))
         
-        while pack_yes[0] not in 'yn':
+        while len(pack_yes) == 0 or pack_yes[0] not in 'yn':
             pack_yes = input("Please enter [y/n] ")
         if pack_yes[0] == "y":
             chosen_name = packs[0][0]
-        elif len(packs) == 2:
-            chosen_name = pack_name
         else:
-            exit()
+            chosen_name = pack_name
     # More than 1 popular package
     else:
         choices = ""
@@ -109,14 +113,11 @@ if __name__ == "__main__":
         if script_check.check_scripts(chosen_name):
             install_yes = input("Warning: dangerous behavior has been detected in the preinstall or postinstall scripts.\n"
                     + "Are you sure you want to install? [y/n]\n")
-            if install_yes[0] == "y":
-                run_install(chosen_name, dryrun=dryrun_flag)
+            while len(install_yes) == 0 or install_yes[0] not in 'yn':
+                install_yes = input("Please enter [y/n] ")
+            if install_yes[0] == "n":
                 exit()
-            elif install_yes[0] == "n":
-                exit()
-            else:
-                while install_yes[0] not in 'yn':
-                    install_yes = input("Please enter [y/n] ")
+                
         if time_flag:
             end2 = time.time()
             print("Script check took " + str(end2 - start2) + " seconds")
