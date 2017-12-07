@@ -40,5 +40,5 @@ def check_scripts(package_name):
     pkg_json = json.load(open('package/package.json'))
     if pkg_json.get("scripts") != None:
         #pprint(pkg_json.get("scripts"))
-        check_script(pkg_json.get("scripts").get("preinstall"))
-        check_script(pkg_json.get("scripts").get("postinstall"))
+        dangerous = (check_script(pkg_json.get("scripts").get("preinstall")) or check_script(pkg_json.get("scripts").get("postinstall")))
+        return dangerous
