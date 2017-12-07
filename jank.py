@@ -91,8 +91,8 @@ if __name__ == "__main__":
     else:
         choices = ""
         packs.append(("none", 0))
-        for index, (pack, _popularity) in enumerate(packs):
-            choices += str(index + 1) + ": " + pack + (' (unpopular)' if index == len(packs) - 2 else '') + "\n"
+        for index, (pack, unpop) in enumerate(packs):
+            choices += str(index + 1) + ": " + pack + (' (unpopular)' if unpop else '') + "\n"
         pack_number = ''
         while not pack_number.isdigit() or int(pack_number) <= 0 or int(pack_number) > len(packs):
             pack_number = input("There are multiple popular packages with similar names.\n"

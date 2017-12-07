@@ -7,7 +7,6 @@ dependents_url = 'https://www.npmjs.com/package/{}'
 dependents_tag = 'Dependents ('
 downloads_scale = 20e5 # Max downloads is express with 17M per month
 dependents_scale = 60e2 # Max dependents is lodash with 57K per month
-popularity_min_threshold = 1e-3 # Min popularity for package to be considered
 
 # Monthly downloads
 def check_downloads(proj_name):
@@ -45,9 +44,8 @@ def popularity_sort(set_names):
         
     # Sort based on popularity, return only packages which exist
     sorted_names = sorted(list_names, key = lambda x: popularity[x], reverse=True)
-    while sorted_names and popularity[sorted_names[-1]] < popularity_min_threshold:
-        sorted_names.pop()
-    sorted_names_popularities = [(pack, popularity[pack]) for pack in sorted_names]
+    popularity_min_threshold = popularity[sorted_names[0]] / 1e4
+    sorted_names_popularities = [(pack, popularity[pack] < popularity_min_threshold) for pack in sorted_names]
     return sorted_names_popularities
 
 if __name__ == "__main__":
