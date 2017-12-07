@@ -47,6 +47,7 @@ def delete_char(s, i):
 
 def typo_generator(s):
     results = set()
+    results.add(s)
     results.add(s.replace('-',''))
     results.add(s)
 

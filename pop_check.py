@@ -12,9 +12,7 @@ popularity_min_threshold = 1e-3 # Min popularity for package to be considered
 # Monthly downloads
 def check_downloads(proj_name):
     r = requests.get(downloads_url.format(proj_name))
-    if r.status_code != requests.codes.ok or 'error' in r.json():
-        return -1
-    return r.json()['downloads']
+    return -1 if r.status_code != requests.codes.ok or 'error' in r.json() else r.json()['downloads']
 
 def check_dependents(proj_name):
     r = requests.get(dependents_url.format(proj_name))
@@ -29,23 +27,21 @@ def check_dependents(proj_name):
         i += 1
     return int(r.text[num_index + len(dependents_tag):i])
 
-def check_downs_and_deps(proj_down_tuple):
-    proj_name, isdown = proj_down_tuple
-    return check_downloads(proj_name) if isdown else check_dependents(proj_name)
-    
 def popularity_sort(set_names):
     list_names = list(set_names)
     # Query each possible names' popularity
     p = Pool(len(list_names))
-    tupledlist = [(x,1) for x in list_names] + [(x,0) for x in list_names]
-    downsanddeps = p.map(check_downs_and_deps, tupledlist)
-    downs = downsanddeps[:len(list_names)]
-    deps = downsanddeps[len(list_names):]
+    downs = p.map(check_downloads, list_names)
+    # Remove packages that do not exist
+    for i in reversed(range(len(list_names))):
+        if downs[i] == -1:
+            del list_names[i]
+    deps = p.map(check_dependents, list_names)
     p.close()
 
     popularity = {}
     for i in range(len(list_names)):
-        popularity[list_names[i]] = -1 if downs[i] == -1 else downs[i] / downloads_scale + deps[i] / dependents_scale
+        popularity[list_names[i]] = downs[i] / downloads_scale + deps[i] / dependents_scale
         
     # Sort based on popularity, return only packages which exist
     sorted_names = sorted(list_names, key = lambda x: popularity[x], reverse=True)
