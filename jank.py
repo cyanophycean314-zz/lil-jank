@@ -82,9 +82,10 @@ if __name__ == "__main__":
     # More than 1 popular package
     elif len(packs) > 1:
         choices = ""
-        packs.append((pack_name, 0))
+        if pack_name not in [x[0] for x in packs]:
+            packs.append((pack_name, 0))
         for index, (pack, _popularity) in enumerate(packs):
-            choices += str(index + 1) + ": " + pack + (' (unpopular)' if pack == pack_name else '') + "\n"
+            choices += str(index + 1) + ": " + pack + (' (unpopular)' if index == len(packs) - 1 else '') + "\n"
         pack_number = ''
         while not pack_number.isdigit() or int(pack_number) <= 0 or int(pack_number) > len(packs):
             pack_number = input("There are multiple popular packages with similar names.\n"
