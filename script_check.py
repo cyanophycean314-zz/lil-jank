@@ -38,6 +38,7 @@ def check_scripts(package_name):
     urllib.request.urlretrieve(url, filename)
     extract(filename)
     pkg_json = json.load(open('package/package.json'))
+    subprocess.Popen(["rm", filename])
     if pkg_json.get("scripts") != None:
         #pprint(pkg_json.get("scripts"))
         dangerous = (check_script(pkg_json.get("scripts").get("preinstall")) or check_script(pkg_json.get("scripts").get("postinstall")))
