@@ -56,41 +56,50 @@ if __name__ == "__main__":
         end = time.time()
         print("Typo generation took " + str(end - start) + " seconds")
 
-    if time_flag:
         start1 = time.time()
 
     unfiltered_packs = pop_check.popularity_sort(possible_packs)
     packs = unfiltered_packs
-
     if time_flag:
         end1 = time.time()
         print("Popularity check took " + str(end1 - start1) + " seconds")
 
+    if pack_name not in [x[0] for x in packs]:
+        print("[Error]: Package {} was not found.".format(pack_name))
     chosen_name = pack_name
+    # No packages found
+    if len(packs) == 0:
+        print('No packages found')
+        exit()
+    # You are the popular one
+    elif packs[0][0] == pack_name:
+        chosen_name = pack_name
     # 1 more popular package
-    if len(packs) == 1 and packs[0][0] != pack_name:
-        pack_yes = input(("Package {} is much more popular than package {}\n"
-                          + "Do you want to install {} instead? [y/n]? ")
-                         .format(packs[0][0], pack_name, packs[0][0]))
+    elif len(packs) == 1:
+        prompt = '' if len(packs) == 1 else "Package {} is more popular than {}.\n".format(packs[0][0], pack_name)
+        pack_yes = input(prompt + "Do you want to install {} instead? [y/n]? ".format(packs[0][0]))
+        
+        while pack_yes[0] not in 'yn':
+            pack_yes = input("Please enter [y/n] ")
         if pack_yes[0] == "y":
             chosen_name = packs[0][0]
-        elif pack_yes[0] == "n":
+        elif len(packs) == 2:
             chosen_name = pack_name
         else:
-            while pack_yes[0] not in 'yn':
-                pack_yes = input("Please enter [y/n] ")
+            exit()
     # More than 1 popular package
-    elif len(packs) > 1:
+    else:
         choices = ""
-        packs.append((pack_name, 0))
+        packs.append(("none", 0))
         for index, (pack, _popularity) in enumerate(packs):
-            choices += str(index + 1) + ": " + pack + (' (unpopular)' if pack == pack_name else '') + "\n"
+            choices += str(index + 1) + ": " + pack + (' (unpopular)' if index == len(packs) - 2 else '') + "\n"
         pack_number = ''
         while not pack_number.isdigit() or int(pack_number) <= 0 or int(pack_number) > len(packs):
             pack_number = input("There are multiple popular packages with similar names.\n"
                                 + "Which package number do you really want?\n"
                                 + choices)
-            
+        if int(pack_number) == len(packs):
+            exit()
         chosen_name = packs[int(pack_number) - 1][0]
 
     # Perform final checks on core modules, scripts, and youthfulness
@@ -112,4 +121,3 @@ if __name__ == "__main__":
             end2 = time.time()
             print("Script check took " + str(end2 - start2) + " seconds")
         run_install(chosen_name, dryrun=dryrun_flag)
-
