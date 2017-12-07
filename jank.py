@@ -1,11 +1,9 @@
-import datetime, requests, os, sys, subprocess, tarfile, json, time
+import datetime, requests, os, sys, subprocess, time
 import pop_check, script_check, typo
 from dateutil import parser
-import urllib.request 
-from pprint import pprint
 
 dryrun_flag = False
-time_flag = False
+time_flag = True
 
 node_core_modules = ["http","events","util","domain","cluster", \
 "buffer","stream","crypto","tls","fs","string_decoder","path","net",\
@@ -53,12 +51,20 @@ if __name__ == "__main__":
 
     pack_name = sys.argv[1]
     possible_packs = typo.typo_generator(pack_name)
+
+    if time_flag:
+        end = time.time()
+        print("Typo generation took " + str(end - start) + " seconds")
+
+    if time_flag:
+        start1 = time.time()
+
     unfiltered_packs = pop_check.popularity_sort(possible_packs)
     packs = unfiltered_packs
 
     if time_flag:
-        end = time.time()
-        print("Typo generation and popularity check took " + str(end - start) + " seconds")
+        end1 = time.time()
+        print("Popularity check took " + str(end1 - start1) + " seconds")
 
     chosen_name = pack_name
     # 1 more popular package
@@ -91,7 +97,7 @@ if __name__ == "__main__":
     if not check_warnings(chosen_name):
         if time_flag:
             start2 = time.time()
-        if not script_check.check_scripts(chosen_name):
+        if script_check.check_scripts(chosen_name):
             install_yes = input("Warning: dangerous behavior has been detected in the preinstall or postinstall scripts.\n"
                     + "Are you sure you want to install? [y/n]\n")
             if install_yes[0] == "y":

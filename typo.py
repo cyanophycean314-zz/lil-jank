@@ -65,12 +65,6 @@ def typo_generator(s):
             results.add(replace_char(s, None, i, j))
     return results
 
-def find_similar_packages(s):
-    if s == "leftpda":
-        return[s, "leftpad"]
-    else:
-        return[s]
-
 def test_typos():
     pack_names = ['react-dom']
     for name in pack_names:

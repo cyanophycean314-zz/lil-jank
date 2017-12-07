@@ -1,3 +1,7 @@
+import subprocess, tarfile, json
+import urllib.request 
+from pprint import pprint
+
 unsafe_keywords = ["http", "request", "process.env", "rm", \
 "password", "username", "host", "network"]
 
@@ -9,19 +13,21 @@ def extract(tar_url, extract_path='.'):
             extract(item.name, "./" + item.name[:item.name.rfind('/')])
 
 def check_script(script):
-    strings = script.split(" ")
-    if strings[0] == "node":
-        file = open("package/" + strings[1], "r")
-        for line in file:
-            for keyword in unsafe_keywords:
-                if keyword in line:
-                    return True
-    else:
-        for string in strings:
-            for keyword in unsafe_keywords:
-                if keyword in string:
-                    return True
-    return False
+	if script == None:
+		return False
+	strings = script.split(" ")
+	if strings[0] == "node":
+		file = open("package/" + strings[1], "r")
+		for line in file:
+			for keyword in unsafe_keywords:
+				if keyword in line:
+					return True
+	else:
+		for string in strings:
+			for keyword in unsafe_keywords:
+				if keyword in string:
+					return True
+	return False
 
 def check_scripts(package_name):
     command = "npm view " + package_name + " dist.tarball"
