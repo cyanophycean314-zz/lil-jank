@@ -3,7 +3,7 @@ import pop_check, script_check, typo
 from dateutil import parser
 
 dryrun_flag = False
-time_flag = True
+time_flag = False
 
 node_core_modules = ["http","events","util","domain","cluster", \
 "buffer","stream","crypto","tls","fs","string_decoder","path","net",\
@@ -39,11 +39,12 @@ def check_warnings(proj_name):
     return False
 
 def run_install(package_name, dryrun=False):
-    command = "echo npm install " + package_name
+    command = "npm install " + package_name
     if dryrun:
         print(command)
     else:
         process = subprocess.Popen(command.split())
+        exit()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
