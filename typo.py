@@ -48,6 +48,7 @@ def delete_char(s, i):
 def typo_generator(s):
     results = set()
     results.add(s.replace('-',''))
+    results.add(s)
 
     for i, char in enumerate(s):
         fat_finger = close_letters.get(char)
